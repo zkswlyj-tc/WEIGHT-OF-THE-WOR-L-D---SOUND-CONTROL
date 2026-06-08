@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weight of the WOR[L]D — Narrative Sound Controller</title>
+    <!-- separated HTML / CSS / JS kinetic interface version -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+
+  <body>
+    <main id="experience">
+      <div id="soundOnlyBg"></div>
+
+      <section id="visualTrackingField" aria-hidden="true">
+        <div class="tracking-frame tracking-frame-main"></div>
+        <div class="tracking-frame tracking-frame-left"></div>
+        <div class="tracking-frame tracking-frame-right"></div>
+        <div class="tracking-line line-a"></div>
+        <div class="tracking-line line-b"></div>
+        <div class="tracking-line line-c"></div>
+        <div class="signal-ring ring-a"></div>
+        <div class="signal-ring ring-b"></div>
+      </section>
+      <canvas id="cinematicCanvas" aria-hidden="true"></canvas>
+
+      <section id="cinematicLabels" aria-hidden="true">
+        <div class="cinematic-title">
+          <span>Weight of the WOR[L]D</span>
+          <small>Hand-tracked sound field</small>
+        </div>
+        <div class="cinematic-roles">
+          <span>LEFT HAND / SCORE</span>
+          <span>RIGHT HAND / WORLD</span>
+        </div>
+      </section>
+
+      <!-- Core designed stems -->
+      <audio id="cityAudio" src="audio/city.mp3" preload="auto"></audio>
+      <audio id="voicesAudio" src="audio/voices.mp3" preload="auto"></audio>
+      <audio id="breathAudio" src="audio/breath.mp3" preload="auto"></audio>
+      <audio id="toneAudio" src="audio/tone.mp3" preload="auto"></audio>
+
+      <!-- Abstract chaos stems -->
+      <audio id="glitchAudio" src="audio/glitch.mp3" preload="auto"></audio>
+      <audio id="rumbleAudio" src="audio/rumble.mp3" preload="auto"></audio>
+      <audio id="whisperAudio" src="audio/whisper.mp3" preload="auto"></audio>
+      <audio id="metalAudio" src="audio/metal.mp3" preload="auto"></audio>
+      <audio id="pulseAudio" src="audio/pulse.mp3" preload="auto"></audio>
+
+      <!-- Garden / re-grounding stems -->
+      <audio id="gardenAudio" src="audio/garden.mp3" preload="auto"></audio>
+      <audio id="birdsAudio" src="audio/birds.mp3" preload="auto"></audio>
+      <audio id="windAudio" src="audio/wind.mp3" preload="auto"></audio>
+      <audio id="waterAudio" src="audio/water.mp3" preload="auto"></audio>
+
+      <!-- Main background music / score stems -->
+      <audio
+        id="scene1ScoreAudio"
+        src="audio/scene1.mp3"
+        preload="auto"
+      ></audio>
+      <audio
+        id="scene2ScoreAudio"
+        src="audio/scene2.mp3"
+        preload="auto"
+      ></audio>
+      <audio
+        id="scene3ScoreAudio"
+        src="audio/scene3.mp3"
+        preload="auto"
+      ></audio>
+
+      <section id="startOverlay">
+        <div class="start-card">
+          <p class="eyebrow">Black Box Sound Controller</p>
+          <h1>Weight of the WOR[L]D</h1>
+          <p class="subtitle">
+            This laptop controls the live sound field only. Hands shape
+            pressure, panning, rupture, and return while the three projections
+            run in the room.
+          </p>
+          <button id="startButton" type="button">Start Sound System</button>
+          <p id="bootStatus">Loading controller...</p>
+        </div>
+      </section>
+
+      <div id="topControls">
+        <button id="stage1Button" class="mini-button stage-jump" type="button">
+          Stage I
+        </button>
+        <button id="stage2Button" class="mini-button stage-jump" type="button">
+          Stage II
+        </button>
+        <button id="stage3Button" class="mini-button stage-jump" type="button">
+          Stage III Garden
+        </button>
+        <button id="pauseButton" class="mini-button" type="button">
+          Pause
+        </button>
+        <button id="debugToggle" class="mini-button" type="button">
+          Debug: Off
+        </button>
+        <button id="restartButton" class="mini-button" type="button">
+          Restart
+        </button>
+      </div>
+
+      <section id="hud" class="quiet" aria-live="polite">
+        <div class="hud-card">
+          <div class="hud-top">
+            <span class="hud-label">Current Stage</span>
+            <span id="stageLabel">Not started</span>
+          </div>
+
+          <div class="meter-row">
+            <span>City</span>
+            <div class="meter"><div id="outerFill" class="fill"></div></div>
+            <span id="outerValue" class="meter-value">0%</span>
+          </div>
+
+          <div class="meter-row">
+            <span>Self</span>
+            <div class="meter"><div id="innerFill" class="fill"></div></div>
+            <span id="innerValue" class="meter-value">0%</span>
+          </div>
+
+          <div class="meter-row">
+            <span>Rupture</span>
+            <div class="meter"><div id="chaosFill" class="fill"></div></div>
+            <span id="chaosValue" class="meter-value">0%</span>
+          </div>
+
+          <div class="meter-row">
+            <span>Echo</span>
+            <div class="meter"><div id="blurFill" class="fill"></div></div>
+            <span id="blurValue" class="meter-value">0%</span>
+          </div>
+
+          <div class="meter-row">
+            <span>Garden</span>
+            <div class="meter"><div id="gardenFill" class="fill"></div></div>
+            <span id="gardenValue" class="meter-value">0%</span>
+          </div>
+
+          <div class="meter-row">
+            <span>Score</span>
+            <div class="meter"><div id="scoreFill" class="fill"></div></div>
+            <span id="scoreValue" class="meter-value">0%</span>
+          </div>
+        </div>
+
+        <div class="hud-card">
+          <p id="interactionHint">
+            Raise one hand into the camera once the sound system begins.
+          </p>
+        </div>
+      </section>
+
+      <aside id="debugPanel">
+        <div class="debug-title">
+          <span>Hand tracking view</span>
+          <span>Press D</span>
+        </div>
+        <div id="cameraWrap">
+          <video id="webcam" autoplay playsinline muted></video>
+          <canvas id="handCanvas"></canvas>
+        </div>
+        <div id="debugReadout">Waiting for hand data...</div>
+      </aside>
+
+      <div id="errorBanner"></div>
+    </main>
+    <script src="sound-controller.js"></script>
+  </body>
+</html>
