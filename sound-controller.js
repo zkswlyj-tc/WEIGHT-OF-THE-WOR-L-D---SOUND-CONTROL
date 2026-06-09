@@ -1515,6 +1515,7 @@ landmarks.forEach((lm, i) => {
         // 0.38 = compressed inward, 1.18 = wide room.
         const spaceWidth = lerp(0.38, 1.18, handSpread);
         const roomLift = 0.9 + handSpread * 0.18;
+        const scene3MasterLift = stage.key === "stage3" ? 1.16 : 1.0;
         const bothStill =
           bothHands * smoothed.leftStillness * smoothed.stillness;
 
@@ -1809,9 +1810,9 @@ landmarks.forEach((lm, i) => {
             0.22,
           );
           innerLevel = clamp(
-            0.32 + planting * 0.42 + openingLeaves * 0.14,
-            0.28,
-            CONFIG.effect.calmMaxInner,
+            0.46 + gardenArrival * 0.18 + planting * 0.46 + openingLeaves * 0.18,
+            0.38,
+            0.98,
           );
           chaosLevel = clamp(
             0.025 + cityMemory * 0.18 - planting * 0.02,
@@ -1825,25 +1826,25 @@ landmarks.forEach((lm, i) => {
           );
 
           gardenLevel = clamp(
-            0.32 + gardenArrival * 0.5 + planting * 0.36 + openingLeaves * 0.16,
-            0,
-            CONFIG.effect.gardenMax,
+            0.48 + gardenArrival * 0.54 + planting * 0.42 + openingLeaves * 0.22,
+            0.26,
+            1.08,
           );
 
           blurAmount = clamp(
-            0.055 + cityMemory * 0.14 - planting * 0.04,
-            0.01,
-            0.18,
+            0.11 + gardenArrival * 0.1 + openingLeaves * 0.08 + cityMemory * 0.06,
+            0.06,
+            0.28,
           );
 
           outerFilterHz = lerp(3200, 12000, planting);
-          innerFilterHz = lerp(5200, 14500, planting);
+          innerFilterHz = lerp(7800, 16500, clamp(planting + openingLeaves * 0.45));
           chaosFilterHz = lerp(700, 1800, cityMemory);
           lowFilterHz = lerp(95, 65, planting);
           gardenFilterHz = lerp(
-            4200,
-            15500,
-            clamp(planting + openingLeaves * 0.4),
+            6800,
+            18000,
+            clamp(planting + openingLeaves * 0.55 + gardenArrival * 0.25),
           );
 
           pan = lerp(rightPan * 0.34, 0, planting);
@@ -1862,14 +1863,14 @@ landmarks.forEach((lm, i) => {
           voicesGain = CONFIG.audio.voicesBase * (0.004 + cityMemory * 0.07);
 
           breathGain = clamp(
-            CONFIG.audio.breathBase + planting * 0.72 + still * 0.08,
-            0,
-            0.86,
+            CONFIG.audio.breathBase + 0.22 + gardenArrival * 0.22 + planting * 0.84 + still * 0.22,
+            0.18,
+            1.18,
           );
           toneGain = clamp(
-            CONFIG.audio.toneBase + planting * 0.42 + openingLeaves * 0.12,
-            0,
-            0.56,
+            CONFIG.audio.toneBase + 0.18 + gardenArrival * 0.22 + planting * 0.5 + openingLeaves * 0.22,
+            0.14,
+            0.82,
           );
 
           glitchGain = chaosLevel * 0.06;
@@ -1878,30 +1879,30 @@ landmarks.forEach((lm, i) => {
           pulseGain = lowLevel * 0.1;
           rumbleGain = lowLevel * 0.12;
 
-          gardenGain = gardenLevel * 1.0;
-          birdsGain = gardenLevel * (0.2 + openingLeaves * 0.34);
-          windGain = gardenLevel * (0.28 + openingLeaves * 0.46);
-          waterGain = gardenLevel * (0.18 + planting * 0.12);
+          gardenGain = gardenLevel * 1.18;
+          birdsGain = gardenLevel * (0.26 + openingLeaves * 0.42);
+          windGain = gardenLevel * (0.42 + openingLeaves * 0.52);
+          waterGain = gardenLevel * (0.28 + planting * 0.18);
 
           scoreLevel = clamp(
             scoreMaster *
-              (0.62 +
-                gardenArrival * 0.34 +
-                planting * 0.24 +
-                openingLeaves * 0.12),
-            0.26,
-            1.0,
+              (0.78 +
+                gardenArrival * 0.46 +
+                planting * 0.3 +
+                openingLeaves * 0.18),
+            0.42,
+            1.18,
           );
           scoreFilterHz = lerp(
-            3200,
-            16500,
-            clamp(leftHeight * 0.45 + openingLeaves * 0.55 + planting * 0.45),
+            7200,
+            18500,
+            clamp(leftHeight * 0.45 + openingLeaves * 0.6 + planting * 0.45 + gardenArrival * 0.22),
           );
           scorePanValue =
             leftPan * 0.34 + Math.sin(audioContext.currentTime * 0.05) * 0.08;
           scene1ScoreGain = 0;
           scene2ScoreGain = 0;
-          scene3ScoreGain = scoreLevel * 1.08;
+          scene3ScoreGain = scoreLevel * 1.28;
         }
 
         // Apply the two-hand space control to every spatial layer.
@@ -1934,7 +1935,7 @@ landmarks.forEach((lm, i) => {
         smoothValue("garden", clamp(gardenLevel));
         smoothValue("score", clamp(scoreLevel));
 
-        ramp(masterGain.gain, CONFIG.audio.master * roomLift);
+        ramp(masterGain.gain, CONFIG.audio.master * roomLift * scene3MasterLift);
 
         ramp(outerBus.gain, outerLevel);
         ramp(innerBus.gain, innerLevel);
@@ -1961,8 +1962,8 @@ landmarks.forEach((lm, i) => {
 
         ramp(stems.city.gain.gain, clamp(cityGain, 0, 1.2));
         ramp(stems.voices.gain.gain, clamp(voicesGain, 0, 1.2));
-        ramp(stems.breath.gain.gain, clamp(breathGain, 0, 1.0));
-        ramp(stems.tone.gain.gain, clamp(toneGain, 0, 0.8));
+        ramp(stems.breath.gain.gain, clamp(breathGain, 0, 1.18));
+        ramp(stems.tone.gain.gain, clamp(toneGain, 0, 0.9));
 
         ramp(stems.glitch.gain.gain, clamp(glitchGain, 0, 0.95));
         ramp(stems.rumble.gain.gain, clamp(rumbleGain, 0, 0.95));
@@ -1970,14 +1971,14 @@ landmarks.forEach((lm, i) => {
         ramp(stems.metal.gain.gain, clamp(metalGain, 0, 0.9));
         ramp(stems.pulse.gain.gain, clamp(pulseGain, 0, 0.86));
 
-        ramp(stems.garden.gain.gain, clamp(gardenGain, 0, 0.9));
-        ramp(stems.birds.gain.gain, clamp(birdsGain, 0, 0.45));
-        ramp(stems.wind.gain.gain, clamp(windGain, 0, 0.6));
-        ramp(stems.water.gain.gain, clamp(waterGain, 0, 0.4));
+        ramp(stems.garden.gain.gain, clamp(gardenGain, 0, 1.18));
+        ramp(stems.birds.gain.gain, clamp(birdsGain, 0, 0.62));
+        ramp(stems.wind.gain.gain, clamp(windGain, 0, 0.78));
+        ramp(stems.water.gain.gain, clamp(waterGain, 0, 0.58));
 
         ramp(stems.scene1Score.gain.gain, clamp(scene1ScoreGain, 0, 1.15));
         ramp(stems.scene2Score.gain.gain, clamp(scene2ScoreGain, 0, 1.32));
-        ramp(stems.scene3Score.gain.gain, clamp(scene3ScoreGain, 0, 1.15));
+        ramp(stems.scene3Score.gain.gain, clamp(scene3ScoreGain, 0, 1.36));
 
         setMeters(
           smoothed.outer,
