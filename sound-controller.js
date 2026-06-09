@@ -1627,6 +1627,17 @@ landmarks.forEach((lm, i) => {
           const openChaos = smoothed.openness * 0.28 * hand;
           const smear = clamp(blurCurve + motionChaos + openChaos, 0, 1);
 
+          // LAST 15 SECONDS OF SCENE II:
+          // From 01:45 to 02:00, the rupture becomes deliberately overwhelming.
+          // This is time-based, so it works even if the participant holds still.
+          const scene2LocalTime = t - CONFIG.stage1EndSeconds;
+          const finalRuptureRaw = clamp((scene2LocalTime - 45) / 15);
+          const finalRupture =
+            finalRuptureRaw * finalRuptureRaw * (3 - 2 * finalRuptureRaw);
+          const finalRupturePulse =
+            (Math.sin(audioContext.currentTime * 13.5) * 0.5 + 0.5) *
+            finalRupture;
+
           // Garden appears here only as a faint memory underneath the rupture.
           const gardenMemory = blurCurve * 0.08;
 
@@ -1703,6 +1714,80 @@ landmarks.forEach((lm, i) => {
           scene1ScoreGain = 0;
           scene2ScoreGain = scoreLevel * 1.12;
           scene3ScoreGain = gardenMemory * 0.16;
+
+          // Final rupture override: last 15 seconds of Scene II become much denser.
+          // It pushes the room into overload before Scene III releases into the garden.
+          if (finalRupture > 0) {
+            outerLevel = clamp(
+              outerLevel + finalRupture * 0.22 + finalRupturePulse * 0.08,
+              0.28,
+              1.18,
+            );
+
+            innerLevel = clamp(
+              innerLevel + finalRupture * 0.18,
+              0.1,
+              0.94,
+            );
+
+            chaosLevel = clamp(
+              chaosLevel + finalRupture * 0.46 + finalRupturePulse * 0.18,
+              0.24,
+              1.16,
+            );
+
+            lowLevel = clamp(
+              lowLevel + finalRupture * 0.34 + finalRupturePulse * 0.08,
+              0.14,
+              1.0,
+            );
+
+            blurAmount = clamp(
+              blurAmount + finalRupture * 0.24 + finalRupturePulse * 0.06,
+              0.16,
+              0.9,
+            );
+
+            // Make the world feel compressed and harsh while chaos cuts through.
+            outerFilterHz = lerp(outerFilterHz, 620, finalRupture * 0.82);
+            innerFilterHz = lerp(innerFilterHz, 5200, finalRupture * 0.55);
+            chaosFilterHz = lerp(
+              chaosFilterHz,
+              5600 + finalRupturePulse * 1400,
+              finalRupture,
+            );
+            lowFilterHz = lerp(lowFilterHz, 68, finalRupture);
+
+            // Wider and less stable spatial movement.
+            pan = clamp(pan + Math.sin(audioContext.currentTime * 1.7) * finalRupture * 0.28, -1, 1);
+            chaosPanValue = clamp(
+              chaosPanValue +
+                Math.sin(audioContext.currentTime * 7.2) * finalRupture * 0.48,
+              -1,
+              1,
+            );
+            scorePanValue = clamp(
+              scorePanValue +
+                Math.sin(audioContext.currentTime * 0.9) * finalRupture * 0.24,
+              -1,
+              1,
+            );
+
+            // Push individual stems so the end feels like a full sonic collapse.
+            cityGain = clamp(cityGain + finalRupture * 0.12, 0, 1.25);
+            voicesGain = clamp(voicesGain + finalRupture * 0.42, 0, 1.25);
+            breathGain = clamp(breathGain + finalRupture * 0.16, 0, 1.0);
+            toneGain = clamp(toneGain + finalRupture * 0.08, 0, 0.8);
+
+            glitchGain = clamp(glitchGain + finalRupture * 0.48, 0, 0.95);
+            rumbleGain = clamp(rumbleGain + finalRupture * 0.48, 0, 0.95);
+            whisperGain = clamp(whisperGain + finalRupture * 0.34, 0, 0.92);
+            metalGain = clamp(metalGain + finalRupture * 0.38, 0, 0.9);
+            pulseGain = clamp(pulseGain + finalRupture * 0.36, 0, 0.86);
+
+            scoreLevel = clamp(scoreLevel + finalRupture * 0.22, 0, 1.18);
+            scene2ScoreGain = clamp(scene2ScoreGain * (1 + finalRupture * 0.42), 0, 1.32);
+          }
         }
 
         if (stage.key === "stage3") {
@@ -1879,11 +1964,11 @@ landmarks.forEach((lm, i) => {
         ramp(stems.breath.gain.gain, clamp(breathGain, 0, 1.0));
         ramp(stems.tone.gain.gain, clamp(toneGain, 0, 0.8));
 
-        ramp(stems.glitch.gain.gain, clamp(glitchGain, 0, 0.8));
-        ramp(stems.rumble.gain.gain, clamp(rumbleGain, 0, 0.8));
-        ramp(stems.whisper.gain.gain, clamp(whisperGain, 0, 0.8));
-        ramp(stems.metal.gain.gain, clamp(metalGain, 0, 0.7));
-        ramp(stems.pulse.gain.gain, clamp(pulseGain, 0, 0.7));
+        ramp(stems.glitch.gain.gain, clamp(glitchGain, 0, 0.95));
+        ramp(stems.rumble.gain.gain, clamp(rumbleGain, 0, 0.95));
+        ramp(stems.whisper.gain.gain, clamp(whisperGain, 0, 0.92));
+        ramp(stems.metal.gain.gain, clamp(metalGain, 0, 0.9));
+        ramp(stems.pulse.gain.gain, clamp(pulseGain, 0, 0.86));
 
         ramp(stems.garden.gain.gain, clamp(gardenGain, 0, 0.9));
         ramp(stems.birds.gain.gain, clamp(birdsGain, 0, 0.45));
@@ -1891,7 +1976,7 @@ landmarks.forEach((lm, i) => {
         ramp(stems.water.gain.gain, clamp(waterGain, 0, 0.4));
 
         ramp(stems.scene1Score.gain.gain, clamp(scene1ScoreGain, 0, 1.15));
-        ramp(stems.scene2Score.gain.gain, clamp(scene2ScoreGain, 0, 1.2));
+        ramp(stems.scene2Score.gain.gain, clamp(scene2ScoreGain, 0, 1.32));
         ramp(stems.scene3Score.gain.gain, clamp(scene3ScoreGain, 0, 1.15));
 
         setMeters(
@@ -1921,8 +2006,19 @@ landmarks.forEach((lm, i) => {
         }
 
         if (stage.key === "stage2") {
-          chance = 0.34 + movementEnergy * 0.55 + opennessEnergy * 0.28;
-          nextChaosBurstDelay = randomRange(360, 1250);
+          const scene2FinalBurst = clamp(
+            (stage.time - (CONFIG.stage2EndSeconds - 15)) / 15,
+          );
+          chance =
+            0.34 +
+            movementEnergy * 0.55 +
+            opennessEnergy * 0.28 +
+            scene2FinalBurst * 0.46;
+
+          nextChaosBurstDelay =
+            scene2FinalBurst > 0
+              ? randomRange(140, 520)
+              : randomRange(360, 1250);
         }
 
         if (stage.key === "stage3") {
